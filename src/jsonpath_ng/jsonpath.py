@@ -32,6 +32,39 @@ class JSONPath:
     JSONPath semantics.
     """
 
+    @property
+    def _bracketed(self) -> bool:
+        """Whether the segment is written in brackets, like `[0]` or `[?@.x]`.
+
+        A bracketed segment follows the previous segment directly,
+        with no `.` between them; other segments are joined with a `.`.
+        """
+
+        return False
+
+    @property
+    def _exposed_bracket(self) -> bool:
+        """Whether the serialized text contains a bracketed segment
+        that a preceding expression would capture when re-parsed.
+
+        A bracketed segment binds to the largest expression before it,
+        so `x..y[0]` parses as `(x..y)[0]`, not as `x..(y[0])`.
+        An expression with an exposed bracket needs parentheses
+        when it follows another expression.
+        """
+
+        return False
+
+    def _to_str(self, this: str = "`this`") -> str:
+        """Serialize to JSONPath text.
+
+        `this` is how the current node is written where a query begins:
+        `@` inside a filter (RFC 9535, section 2.3.5), and `` `this` ``
+        elsewhere. Nodes that contain a query pass `this` down to it.
+        """
+
+        return str(self)
+
     def find(self, data: typing.Any) -> list[DatumInContext]:
         """
         All `JSONPath` types support `find()`,
@@ -318,6 +351,10 @@ class This(JSONPath):
     def __str__(self) -> str:
         return "`this`"
 
+    def _to_str(self, this: str = "`this`") -> str:
+        # The current node is written as `@` where a filter query begins.
+        return this
+
     def __repr__(self) -> str:
         return "This()"
 
@@ -395,23 +432,25 @@ class Child(JSONPath):
             and self.right == other.right
         )
 
+    @property
+    def _exposed_bracket(self) -> bool:
+        # A bracketed segment anywhere in the child's own text is exposed.
+        return (
+            self.right._bracketed
+            or self.left._exposed_bracket
+            or self.right._exposed_bracket
+        )
+
+    def _to_str(self, this: str = "`this`") -> str:
+        left = self.left._to_str(this)
+        right = self.right._to_str()
+        # A bracketed segment, like an index, a slice, or a filter,
+        # follows the previous segment directly, with no `.` between them.
+        separator = "" if self.right._bracketed else "."
+        return f"{left}{separator}{right}"
+
     def __str__(self) -> str:
-        # Special case: If the right side is a `Filter` instance
-        # or a `SortedThis` instance that is written as a bracketed list of sorts,
-        # do not inject a period between the left and right sides.
-        # Adding a period would corrupt the syntax and prevent re-parsing.
-        # A `SortedThis` with no expressions is written as `sorted`
-        # and needs the period, like any other name.
-        # Current module design creates circular imports, so imports happen here.
-        from .ext.filter import Filter
-        from .ext.iterable import SortedThis
-
-        if isinstance(self.right, Filter) or (
-            isinstance(self.right, SortedThis) and self.right.expressions
-        ):
-            return f"{self.left}{self.right}"
-
-        return f"{self.left}.{self.right}"
+        return self._to_str()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.left!r}, {self.right!r})"
@@ -638,8 +677,17 @@ class Descendants(JSONPath):
 
         return data
 
+    def _to_str(self, this: str = "`this`") -> str:
+        left = self.left._to_str(this)
+        right = self.right._to_str()
+        if self.right._exposed_bracket:
+            # A bracketed segment in the right side would bind
+            # to the whole `left..right` expression when re-parsed.
+            right = f"({right})"
+        return f"({left}..{right})"
+
     def __str__(self) -> str:
-        return f"({self.left}..{self.right})"
+        return self._to_str()
 
     def __eq__(self, other: typing.Any) -> bool:
         return (
@@ -972,6 +1020,8 @@ class Index(JSONPath):
     NOTE: For the concrete syntax of `[*]`, the abstract syntax is `Wildcard()`.
     """
 
+    _bracketed = True
+
     def __init__(self, *indices: int) -> None:
         self.indices = indices
 
@@ -1102,6 +1152,8 @@ class Slice(JSONPath):
     # which is a deprecated wildcard when applied to an object.
     # A slice from a parsed query is never interpreted a wildcard.
     _deprecated_wildcard_use: bool
+
+    _bracketed = True
 
     def __init__(
         self, start: int | None = None, end: int | None = None, step: int | None = None

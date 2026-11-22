@@ -136,3 +136,37 @@ def test_queries_with_sorted_roundtrip(query):
 )
 def test_sorted_str_matches_the_query(query):
     assert str(jsonpath_ng.ext.parse(query)) == query
+
+
+@pytest.mark.parametrize("parse", PARSERS)
+@pytest.mark.parametrize(
+    "query",
+    [
+        pytest.param("$[0]", id="index"),
+        pytest.param("$[-1]", id="negative-index"),
+        pytest.param("$.a[0]", id="field-then-index"),
+        pytest.param("$.a[0,1]", id="indices"),
+        pytest.param("$.a[0][1]", id="adjacent-indices"),
+        pytest.param("$.a[0].b", id="index-then-field"),
+        pytest.param("$.a[1:2]", id="slice"),
+        pytest.param("$.a[:]", id="full-slice"),
+        pytest.param("$.a[0:2].b", id="slice-then-field"),
+    ],
+)
+def test_index_and_slice_str_matches_the_query(parse, query):
+    """Indices and slices follow the previous segment directly, with no period."""
+    assert str(parse(query)) == query
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        pytest.param("$[?@.a[0] == 1]", id="filter-index"),
+        pytest.param("$[?@.a[-1] == 1]", id="filter-negative-index"),
+        pytest.param("$[?@.a[0:2] == 1]", id="filter-slice"),
+        pytest.param("$.a[?@.x == 1][0]", id="filter-then-index"),
+    ],
+)
+def test_filter_str_matches_the_query(query):
+    """A segment in a filter is written exactly as it is in a path."""
+    assert str(jsonpath_ng.ext.parse(query)) == query

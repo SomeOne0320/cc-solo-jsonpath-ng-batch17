@@ -71,8 +71,21 @@ class Operation(JSONPath):
             self.__class__.__name__, self.left, self.op_symbol, self.right
         )
 
+    def _to_str(self, this: str = "`this`") -> str:
+        left = (
+            self.left._to_str(this)
+            if isinstance(self.left, JSONPath)
+            else str(self.left)
+        )
+        right = (
+            self.right._to_str(this)
+            if isinstance(self.right, JSONPath)
+            else str(self.right)
+        )
+        return f"{left} {self.op_symbol} {right}"
+
     def __str__(self) -> str:
-        return f"{self.left} {self.op_symbol} {self.right}"
+        return self._to_str()
 
     def __eq__(self, other: t.Any) -> bool:
         return (

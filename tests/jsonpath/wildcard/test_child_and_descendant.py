@@ -34,7 +34,7 @@ def test_child_wildcard_selects_array_elements(parse):
 def test_child_wildcard_selects_nested_array_elements(parse):
     found = paths_and_values(parse, "$.a.*", {"a": ["x", "y"]})
 
-    assert found == [("a.[0]", "x"), ("a.[1]", "y")]
+    assert found == [("a[0]", "x"), ("a[1]", "y")]
 
 
 @parsers
@@ -65,9 +65,9 @@ def test_descendant_wildcard_selects_nested_array_elements(parse):
     assert found == [
         ("[0]", [1, 2]),
         ("[1]", [3]),
-        ("[0].[0]", 1),
-        ("[0].[1]", 2),
-        ("[1].[0]", 3),
+        ("[0][0]", 1),
+        ("[0][1]", 2),
+        ("[1][0]", 3),
     ]
 
 
@@ -80,10 +80,10 @@ def test_descendant_wildcard_selects_all_nodes_below_an_object(parse):
 
     assert sorted(path for path, _ in found) == [
         "list",
-        "list.[0]",
-        "list.[0].prop1",
-        "list.[1]",
-        "list.[1].prop2",
+        "list[0]",
+        "list[0].prop1",
+        "list[1]",
+        "list[1].prop2",
     ]
 
 
@@ -100,13 +100,13 @@ def test_descendant_wildcard_rfc_table_16(parse):
 
     assert sorted(found, key=lambda item: item[0]) == [
         ("a", [5, 3, [{"j": 4}, {"k": 6}]]),
-        ("a.[0]", 5),
-        ("a.[1]", 3),
-        ("a.[2]", [{"j": 4}, {"k": 6}]),
-        ("a.[2].[0]", {"j": 4}),
-        ("a.[2].[0].j", 4),
-        ("a.[2].[1]", {"k": 6}),
-        ("a.[2].[1].k", 6),
+        ("a[0]", 5),
+        ("a[1]", 3),
+        ("a[2]", [{"j": 4}, {"k": 6}]),
+        ("a[2][0]", {"j": 4}),
+        ("a[2][0].j", 4),
+        ("a[2][1]", {"k": 6}),
+        ("a[2][1].k", 6),
         ("o", {"j": 1, "k": 2}),
         ("o.j", 1),
         ("o.k", 2),
@@ -125,10 +125,10 @@ def test_descendant_wildcard_rfc_table_16_ordering(parse):
     for chain in (
         ("o", "o.j"),
         ("o", "o.k"),
-        ("a", "a.[0]", "a.[1]", "a.[2]"),
-        ("a.[1]", "a.[2].[0]", "a.[2].[0].j"),
-        ("a.[1]", "a.[2].[1]", "a.[2].[1].k"),
-        ("a.[2]", "a.[2].[0]", "a.[2].[1]", "a.[2].[0].j", "a.[2].[1].k"),
+        ("a", "a[0]", "a[1]", "a[2]"),
+        ("a[1]", "a[2][0]", "a[2][0].j"),
+        ("a[1]", "a[2][1]", "a[2][1].k"),
+        ("a[2]", "a[2][0]", "a[2][1]", "a[2][0].j", "a[2][1].k"),
     ):
         positions = [order.index(path) for path in chain]
         assert positions == sorted(positions), chain

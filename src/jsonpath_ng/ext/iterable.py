@@ -28,6 +28,17 @@ class SortedThis(This):
     def __init__(self, expressions: list[tuple[JSONPath, bool]] | None = None) -> None:
         self.expressions = expressions
 
+    @property
+    def _bracketed(self) -> bool:
+        # A bracketed list of sort expressions follows the previous segment
+        # directly, but `sorted` is a name and is joined to it with a `.`.
+        return bool(self.expressions)
+
+    def _to_str(self, this: str = "`this`") -> str:
+        # The sorted current node is not the current node itself,
+        # so it keeps its own syntax even where a filter query begins.
+        return str(self)
+
     def _compare(self, left: t.Any, right: t.Any) -> int:
         left = DatumInContext.wrap(left)
         right = DatumInContext.wrap(right)

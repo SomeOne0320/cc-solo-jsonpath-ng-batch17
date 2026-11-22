@@ -46,7 +46,7 @@ Basic examples:
 
     # Matches remember where they came from
     >>> [str(match.full_path) for match in jsonpath_expr.find({'foo': [{'baz': 1}, {'baz': 2}]})]
-    ['foo.[0].baz', 'foo.[1].baz']
+    ['foo[0].baz', 'foo[1].baz']
 
     # Modifying values matching the path
     >>> jsonpath_expr.update( {'foo': [{'baz': 1}, {'baz': 2}]}, 3)
@@ -68,7 +68,7 @@ Basic examples:
     # And this can be useful for automatically providing ids for bits of data that do not have them (currently a global switch)
     >>> jsonpath.auto_id_field = 'id'
     >>> [match.value for match in parse('foo[*].id').find({'foo': [{'id': 'bizzle'}, {'baz': 3}]})]
-    ['foo.bizzle', 'foo.[1]']
+    ['foo.bizzle', 'foo[1]']
 
     # A handy extension: named operators like `parent`
     >>> [match.value for match in parse('a.*.b.`parent`.c').find({'a': {'x': {'b': 1, 'c': 'number one'}, 'y': {'b': 2, 'c': 'number two'}}})]

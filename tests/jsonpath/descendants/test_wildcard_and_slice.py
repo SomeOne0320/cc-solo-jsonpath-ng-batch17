@@ -29,7 +29,7 @@ def test_wildcard_selects_object_members_and_array_elements(parse):
     found, count = paths_and_values(parse, "$..[*]", data)
 
     assert count == 3
-    assert found == {"a": ["foo", "bar"], "a.[0]": "foo", "a.[1]": "bar"}
+    assert found == {"a": ["foo", "bar"], "a[0]": "foo", "a[1]": "bar"}
 
 
 @parsers
@@ -44,13 +44,13 @@ def test_wildcard_rfc_nested_example(parse):
         "a": [5, 3, [{"j": 4}, {"k": 6}]],
         "o.j": 1,
         "o.k": 2,
-        "a.[0]": 5,
-        "a.[1]": 3,
-        "a.[2]": [{"j": 4}, {"k": 6}],
-        "a.[2].[0]": {"j": 4},
-        "a.[2].[1]": {"k": 6},
-        "a.[2].[0].j": 4,
-        "a.[2].[1].k": 6,
+        "a[0]": 5,
+        "a[1]": 3,
+        "a[2]": [{"j": 4}, {"k": 6}],
+        "a[2][0]": {"j": 4},
+        "a[2][1]": {"k": 6},
+        "a[2][0].j": 4,
+        "a[2][1].k": 6,
     }
 
 
@@ -73,9 +73,9 @@ def test_wildcard_full_paths_round_trip(parse):
 @pytest.mark.parametrize(
     "expression, expected",
     (
-        ("$..[:1]", ["a.[0]", "b.[0]"]),
-        ("$..[0:2]", ["a.[0]", "a.[1]", "b.[0]", "b.[1]"]),
-        ("$..[1:]", ["a.[1]", "b.[1]"]),
+        ("$..[:1]", ["a[0]", "b[0]"]),
+        ("$..[0:2]", ["a[0]", "a[1]", "b[0]", "b[1]"]),
+        ("$..[1:]", ["a[1]", "b[1]"]),
     ),
 )
 @parsers

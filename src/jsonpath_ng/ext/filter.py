@@ -16,16 +16,12 @@ import re
 import typing as t
 import warnings
 
-from .. import Child
 from .. import DatumInContext
-from .. import Descendants
 from .. import Fields
 from .. import Index
 from .. import JSONPath
 from .. import Root
-from .. import This
 from ..jsonpath import FilterFunction
-from .arithmetic import Operation
 
 StringOperator: t.TypeAlias = t.Literal["!=", "==", "=", "<=", "<", ">=", ">"]
 # The operators an `Expression` can have, besides `None` for an existence test.
@@ -118,41 +114,10 @@ def _compare(op: StringOperator | t.Literal["=~"], left: t.Any, right: t.Any) ->
     return EQUALITY_ONLY_OPERATOR_MAP[op](_equal(left, right))
 
 
-def _query_to_str(path: t.Any, leading: bool = True) -> str:
-    """Serialize a query that is used inside a filter.
-
-    RFC 9535 section 2.3.5 starts a filter's relative query with `@`,
-    so the current node is written as `@` where the query begins.
-    Elsewhere, the current node can only be written as "`this`",
-    which is not RFC 9535 syntax and should not be promoted
-    to a position where it looks like it is.
-
-    Bracketed segments are written without a leading `.`,
-    as required by the singular queries that can be compared to a value.
-    """
-
-    if isinstance(path, This):
-        return "@" if leading else str(path)
-    if isinstance(path, Child):
-        left = _query_to_str(path.left, leading)
-        right = _query_to_str(path.right, False)
-        if right.startswith("["):
-            # Indices, slices, filters, and sorts are bracketed, with no period.
-            return f"{left}{right}"
-        return f"{left}.{right}"
-    if isinstance(path, Descendants):
-        return (
-            f"({_query_to_str(path.left, leading)}..{_query_to_str(path.right, False)})"
-        )
-    if isinstance(path, Operation):
-        left = _query_to_str(path.left)
-        right = _query_to_str(path.right)
-        return f"{left} {path.op_symbol} {right}"
-    return str(path)
-
-
 class Filter(JSONPath):
     """The JSONQuery filter"""
+
+    _bracketed = True
 
     def __init__(self, expressions: t.Iterable[JSONPath]) -> None:
         self.expressions = list(expressions)
@@ -402,7 +367,8 @@ class Expression(JSONPath):
             )
 
     def __str__(self) -> str:
-        target = _query_to_str(self.target)
+        # RFC 9535 section 2.3.5 starts a filter's relative query with `@`.
+        target = self.target._to_str("@")
         if self.op is None:
             return target
         if self.op == "!":
@@ -410,7 +376,7 @@ class Expression(JSONPath):
 
         value = self.value
         if isinstance(value, JSONPath):
-            rendered = _query_to_str(value)
+            rendered = value._to_str("@")
         elif value is None:
             rendered = "null"
         elif isinstance(value, bool):

@@ -52,8 +52,8 @@ def test_selects_from_objects_and_arrays_at_any_depth():
 
     assert paths_and_values("$..[?@.k]", data) == [
         ("a.x", {"k": 1}),
-        ("b.[0]", {"k": 3}),
-        ("b.[1].[0]", {"k": 4}),
+        ("b[0]", {"k": 3}),
+        ("b[1][0]", {"k": 4}),
     ]
 
 
@@ -72,9 +72,9 @@ def test_comparison():
     }
 
     assert paths_and_values('$..[?(@.gender == "Female")].name', data) == [
-        ("students.[1].name", "Mary"),
-        ("students.[2].name", "Susan"),
-        ("teachers.[1].name", "Lucy"),
+        ("students[1].name", "Mary"),
+        ("students[2].name", "Susan"),
+        ("teachers[1].name", "Lucy"),
     ]
 
 

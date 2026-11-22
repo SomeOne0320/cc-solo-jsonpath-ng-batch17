@@ -41,7 +41,7 @@ def test_descendants_find_wide(benchmark):
     result = benchmark(lambda: path.find(haystack))
 
     assert len(result) == 2 ** (depth + 1) - 1
-    assert str(result[-1].full_path) == "b.[0]." * depth + "needle"
+    assert str(result[-1].full_path) == "b[0]." * depth + "needle"
 
 
 @benchmark_group

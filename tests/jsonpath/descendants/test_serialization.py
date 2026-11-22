@@ -17,6 +17,12 @@ parsers = pytest.mark.parametrize(
         # nor is it consistent with the precedence rules of 'a..b[c]', below.
         ("a..b.c", "(a..b.c)"),
         ("a..b[c]", "(a..b).c"),
+        # A bracketed segment in the right side is parenthesized
+        # so that it is not captured by the `..` expression when re-parsed.
+        ("a..[0]", "(a..[0])"),
+        ("a..(b[0])", "(a..(b[0]))"),
+        ("a..(b[0].c)", "(a..(b[0].c))"),
+        ("a..(b[1:2])", "(a..(b[1:2]))"),
     ),
 )
 @parsers
