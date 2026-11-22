@@ -1,0 +1,13 @@
+Added
+-----
+
+*   Add ``JSONPath.plan_update()`` and ``JSONPath.apply_update_plan()``.
+
+    ``plan_update()`` previews an update without modifying the document.
+    It returns JSON-compatible data that lists, in match order, one entry for
+    each distinct location with its normalized path, original value,
+    and new value. ``apply_update_plan()`` validates every location first
+    and writes nothing if any location is missing or has changed.
+    Prepare plans that match both a location and one of its descendants
+    are rejected to avoid one entry silently overwriting another.
+    ``update()`` is unchanged.

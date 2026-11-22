@@ -65,6 +65,15 @@ Basic examples:
     >>> jsonpath_expr.filter(lambda d: d == 2, {'foo': [{'baz': 1}, {'baz': 2}]})
     {'foo': [{'baz': 1}, {}]}
 
+    # Preview an update as JSON data that can be applied in another process
+    >>> plan = jsonpath_expr.plan_update({'foo': [{'baz': 1}, {'baz': 2}]}, 3)
+    >>> plan
+    [{'path': "$['foo'][0]['baz']", 'old_value': 1, 'new_value': 3}, {'path': "$['foo'][1]['baz']", 'old_value': 2, 'new_value': 3}]
+
+    # Apply the plan only if every recorded value is still unchanged
+    >>> jsonpath_expr.apply_update_plan({'foo': [{'baz': 1}, {'baz': 2}]}, plan)
+    {'foo': [{'baz': 3}, {'baz': 3}]}
+
     # And this can be useful for automatically providing ids for bits of data that do not have them (currently a global switch)
     >>> jsonpath.auto_id_field = 'id'
     >>> [match.value for match in parse('foo[*].id').find({'foo': [{'id': 'bizzle'}, {'baz': 3}]})]

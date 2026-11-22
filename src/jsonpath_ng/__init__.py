@@ -2,6 +2,12 @@ import warnings
 
 from ._deprecations import _DEPRECATED_CLASS_NAMES
 from ._deprecations import _deprecated_class_message
+from ._update_plan import UpdatePlan as UpdatePlan  # noqa: F401
+from ._update_plan import UpdatePlanEntry as UpdatePlanEntry  # noqa: F401
+from .exceptions import JSONPathError  # noqa: F401
+from .exceptions import UpdatePlanConflictError  # noqa: F401
+from .exceptions import UpdatePlanError  # noqa: F401
+from .exceptions import UpdatePlanStaleError  # noqa: F401
 from .jsonpath import *  # noqa
 from .parser import parse  # noqa
 

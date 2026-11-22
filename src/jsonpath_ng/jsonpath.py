@@ -8,6 +8,7 @@ import warnings
 
 from jsonpath_ng._deprecations import _DEPRECATED_CLASS_NAMES
 from jsonpath_ng._deprecations import _deprecated_class_message
+from jsonpath_ng._update_plan import UpdatePlan
 from jsonpath_ng.exceptions import JSONPathError
 
 # Get logger name
@@ -55,6 +56,41 @@ class JSONPath:
 
     def update_or_create(self, data: typing.Any, val: typing.Any) -> typing.Any:
         return self.update(data, val)
+
+    def plan_update(self, data: typing.Any, val: typing.Any) -> UpdatePlan:
+        """
+        Preview an update without changing *data*.
+
+        The result is a JSON-compatible list that records, in match order,
+        one entry for each distinct location the query selects. Each entry has
+        a ``path`` (an RFC 9535 normalized path that identifies the location
+        exactly), the ``old_value`` found there, and the ``new_value`` that
+        ``update()`` would store.
+
+        Pass the result to `apply_update_plan()` in another process to apply
+        the update only if every location is still unchanged.
+
+        Raises `UpdatePlanConflictError` if the query matches both a location
+        and one of its descendants, because updating both could silently
+        overwrite one of the entries.
+        """
+        from jsonpath_ng._update_plan import build_plan
+
+        return build_plan(self, data, val)
+
+    def apply_update_plan(self, data: typing.Any, plan: typing.Any) -> typing.Any:
+        """
+        Apply a plan from `plan_update()`, atomically.
+
+        Every location in the plan is checked first. If any location no longer
+        exists or holds a value different from its ``old_value``,
+        `UpdatePlanStaleError` is raised and *data* is not modified.
+
+        Returns *data* with the planned updates applied.
+        """
+        from jsonpath_ng._update_plan import apply_plan
+
+        return apply_plan(self, data, plan)
 
     def _update_with_root(
         self, data: typing.Any, val: typing.Any, root: typing.Any
